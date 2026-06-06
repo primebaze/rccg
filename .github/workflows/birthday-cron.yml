@@ -1,0 +1,17 @@
+name: Birthday notifications
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call birthday notification endpoint
+        run: |
+          curl --fail --show-error --silent \
+            --request GET \
+            --header "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.APP_URL }}/api/cron/birthdays"
