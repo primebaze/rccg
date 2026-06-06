@@ -48,14 +48,12 @@ export default function PrivacyPage() {
         <section>
           <h2>Contact</h2>
           <p>
-            For privacy requests, contact the church office using the official contact details provided by RCCG Worship
+            For privacy requests, contact us using the official contact details provided by RCCG Worship
             Tabernacle.
           </p>
         </section>
 
-        <p className="legal-note">
-          This page is a practical template for the webapp and should be reviewed by the church before public launch.
-        </p>
+       
       </article>
     </main>
   );

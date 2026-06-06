@@ -15,7 +15,7 @@ export default function TermsPage() {
           <h2>Use of this app</h2>
           <p>
             This app is provided to help RCCG Worship Tabernacle collect and maintain member profile information. Please
-            submit accurate information and update the church office when your details change.
+            submit accurate information and update the us when your details change.
           </p>
         </section>
 
@@ -31,7 +31,7 @@ export default function TermsPage() {
           <h2>Communications</h2>
           <p>
             The church may contact you by email, phone, or text message for member-related updates and administrative
-            purposes. You can ask the church office to update your communication preferences.
+            purposes. You can ask the us to update your communication preferences.
           </p>
         </section>
 
@@ -46,13 +46,11 @@ export default function TermsPage() {
         <section>
           <h2>Contact</h2>
           <p>
-            Questions about these terms should be directed to the RCCG Worship Tabernacle church office.
+            Questions about these terms should be directed to the RCCG Worship Tabernacle .
           </p>
         </section>
 
-        <p className="legal-note">
-          These terms are a practical template for the webapp and should be reviewed by the church before public launch.
-        </p>
+        
       </article>
     </main>
   );
