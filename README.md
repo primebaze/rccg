@@ -10,7 +10,7 @@ A Next.js, Supabase, Resend, and optional Twilio app for member onboarding and a
 - Optional Twilio SMS greetings
 - Admin birthday email on the day
 - Admin reminder emails before birthdays
-- Protected admin dashboard at `/admin?key=YOUR_ADMIN_DASHBOARD_KEY`
+- Protected admin dashboard at `/admin`
 - Protected cron endpoint at `/api/cron/birthdays`
 
 ## Setup
@@ -36,6 +36,45 @@ supabase/add-profile-fields.sql
 ```bash
 npm run dev
 ```
+
+## Admin Login
+
+Open:
+
+```text
+/admin
+```
+
+The default username is `admin`, or set a custom username with:
+
+```text
+ADMIN_USERNAME=admin
+```
+
+The admin password is the value of:
+
+```text
+ADMIN_DASHBOARD_KEY=choose-a-long-random-value
+```
+
+The admin dashboard includes member search, filters, CSV export, edit/delete, and member actions.
+
+Admin pages:
+
+- `/admin` overview
+- `/admin/members` member directory and profile management
+- `/admin/messages` email and SMS tools
+- `/admin/birthdays` birthday planning view
+
+Member actions:
+
+- `Email` opens the admin device email app with the member address.
+- `SMS` opens the admin device SMS app with the member phone number.
+- `Call` opens the admin device phone app.
+- `Send email` sends a custom email through Resend.
+- `Send SMS` sends a custom SMS through Twilio.
+
+Custom email requires `RESEND_API_KEY` and `RESEND_FROM_EMAIL`. Custom SMS requires `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_FROM_PHONE`.
 
 ## Birthday Scheduler
 

@@ -18,7 +18,11 @@ export const memberSchema = z.object({
   consentEmail: z.literal(true, {
     errorMap: () => ({ message: "Email consent is required" })
   }),
-  consentSms: z.boolean().default(true)
+  consentSms: z.boolean().default(true),
+  // Honeypot: a hidden field real users never see. Bots that fill every input
+  // will populate it. Accepted by the schema but handled (decoy success) in the
+  // route, so bots aren't told the field is the reason they were filtered.
+  website: z.string().max(200).optional().default("")
 });
 
 export type MemberFormInput = z.infer<typeof memberSchema>;

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BriefcaseBusiness,
   CalendarHeart,
@@ -22,6 +22,12 @@ type FormState = "idle" | "submitting" | "success" | "error";
 export default function Home() {
   const [status, setStatus] = useState<FormState>("idle");
   const [message, setMessage] = useState("");
+  // Records when the form became interactive, used as a bot submit-speed trap.
+  const loadedAt = useRef(0);
+
+  useEffect(() => {
+    loadedAt.current = Date.now();
+  }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,7 +51,9 @@ export default function Home() {
       emergencyContactName: formData.get("emergencyContactName"),
       emergencyContactPhone: formData.get("emergencyContactPhone"),
       consentEmail: true,
-      consentSms: true
+      consentSms: true,
+      website: formData.get("website"),
+      ts: loadedAt.current
     };
 
     const response = await fetch("/api/members", {
@@ -80,6 +88,13 @@ export default function Home() {
         </div>
 
         <form className="member-form" onSubmit={handleSubmit}>
+          <div className="honeypot-field" aria-hidden="true">
+            <label>
+              Website
+              <input name="website" tabIndex={-1} autoComplete="off" />
+            </label>
+          </div>
+
           <div className="field-grid">
             <label>
               <span><UserRound size={16} />First name</span>

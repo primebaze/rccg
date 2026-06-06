@@ -10,6 +10,15 @@ function fromEmail() {
   return process.env.RESEND_FROM_EMAIL ?? "RCCG Members <onboarding@resend.dev>";
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 export async function sendMemberSignupConfirmation(member: MemberFormInput) {
   if (!resend || !member.consentEmail) return { skipped: true };
 
@@ -63,6 +72,44 @@ export async function sendMemberBirthdaySms(member: Member) {
     from,
     to: member.phone,
     body: `Happy birthday, ${member.first_name}! RCCG celebrates you today. May God bless your new year with joy and grace.`
+  });
+}
+
+export async function sendCustomMemberEmail(member: Member, subject: string, body: string) {
+  if (!resend || !member.consent_email) return { skipped: true };
+
+  return resend.emails.send({
+    from: fromEmail(),
+    to: member.email,
+    subject,
+    text: body,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#17211f;max-width:640px">
+        ${body
+          .split("\n")
+          .filter(Boolean)
+          .map((line) => `<p>${escapeHtml(line)}</p>`)
+          .join("")}
+        <p style="margin-top:24px">RCCG Worship Tabernacle</p>
+      </div>
+    `
+  });
+}
+
+export async function sendCustomMemberSms(member: Member, body: string) {
+  if (!member.consent_sms) return { skipped: true };
+
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const from = process.env.TWILIO_FROM_PHONE;
+
+  if (!accountSid || !authToken || !from) return { skipped: true };
+
+  const client = twilio(accountSid, authToken);
+  return client.messages.create({
+    from,
+    to: member.phone,
+    body
   });
 }
 

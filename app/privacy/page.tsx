@@ -6,7 +6,12 @@ export default function PrivacyPage() {
   return (
     <main className="legal-shell">
       <article className="legal-panel">
-        <Link className="legal-back" href="/">Back to registration</Link>
+        <nav className="public-nav legal-page-nav" aria-label="Site navigation">
+          <Link href="/">Registration</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+          <Link href="/admin">Admin</Link>
+        </nav>
         <p className="legal-kicker">RCCG Worship Tabernacle</p>
         <h1>Privacy Policy</h1>
         <p className="legal-updated">Last updated: {lastUpdated}</p>
