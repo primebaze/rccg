@@ -1,12 +1,34 @@
 import { Resend } from "resend";
 import twilio from "twilio";
 import type { Member } from "@/lib/member-schema";
+import type { MemberFormInput } from "@/lib/member-schema";
 import { fullName } from "@/lib/birthday";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 function fromEmail() {
   return process.env.RESEND_FROM_EMAIL ?? "RCCG Members <onboarding@resend.dev>";
+}
+
+export async function sendMemberSignupConfirmation(member: MemberFormInput) {
+  if (!resend || !member.consentEmail) return { skipped: true };
+
+  return resend.emails.send({
+    from: fromEmail(),
+    to: member.email,
+    subject: "Your member profile has been received",
+    text: `Hello ${member.firstName},\n\nThank you for completing your RCCG Worship Tabernacle member profile. We have received your details and will use them to keep our member records current.\n\nIf any information changes, please contact the us.\n\nRCCG Worship Tabernacle`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#17211f;max-width:640px">
+        <h1 style="color:#0f766e;margin:0 0 16px">Profile received</h1>
+        <p>Hello ${member.firstName},</p>
+        <p>Thank you for completing your RCCG Worship Tabernacle member profile.</p>
+        <p>We have received your details and will use them to keep our member records current.</p>
+        <p>If any information changes, please contact the us.</p>
+        <p style="margin-top:24px">With love,<br/>RCCG Worship Tabernacle</p>
+      </div>
+    `
+  });
 }
 
 export async function sendMemberBirthdayEmail(member: Member) {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { memberSchema } from "@/lib/member-schema";
+import { sendMemberSignupConfirmation } from "@/lib/notifications";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function POST(request: Request) {
@@ -41,6 +42,10 @@ export async function POST(request: Request) {
   if (error) {
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
+
+  sendMemberSignupConfirmation(member).catch((sendError) => {
+    console.error("Failed to send member signup confirmation", sendError);
+  });
 
   return NextResponse.json({ message: "You are registered. Welcome to the RCCG family." });
 }
