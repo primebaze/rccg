@@ -9,10 +9,8 @@ export const memberSchema = z.object({
   maritalStatus: z.enum(["single", "married", "widowed", "divorced", "prefer_not_to_say"]),
   isOrdained: z.boolean().default(false),
   addressLine1: z.string().trim().min(3, "Address is required").max(180),
-  addressLine2: z.string().trim().max(180).optional().default(""),
   city: z.string().trim().min(2, "City is required").max(100),
   postalCode: z.string().trim().min(2, "Postal code is required").max(24),
-  country: z.string().trim().min(2, "Country is required").max(80),
   occupation: z.string().trim().max(120).optional().default(""),
   ministryDepartment: z.string().trim().max(120).optional().default(""),
   emergencyContactName: z.string().trim().max(120).optional().default(""),
@@ -35,10 +33,8 @@ export type Member = {
   marital_status: "single" | "married" | "widowed" | "divorced" | "prefer_not_to_say";
   is_ordained: boolean;
   address_line_1: string;
-  address_line_2: string | null;
   city: string;
   postal_code: string;
-  country: string;
   occupation: string | null;
   ministry_department: string | null;
   emergency_contact_name: string | null;

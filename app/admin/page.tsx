@@ -42,10 +42,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       marital_status,
       is_ordained,
       address_line_1,
-      address_line_2,
       city,
       postal_code,
-      country,
       occupation,
       ministry_department,
       emergency_contact_name,
@@ -96,7 +94,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <div className="contact-lines">
               <span><Mail size={15} />{member.email}</span>
               <span><Phone size={15} />{member.phone}</span>
-              <span><Home size={15} />{[member.address_line_1, member.address_line_2, member.city, member.postal_code, member.country].filter(Boolean).join(", ")}</span>
+              <span><Home size={15} />{[member.address_line_1, member.city, member.postal_code].filter(Boolean).join(", ")}</span>
               {member.occupation ? <span><BriefcaseBusiness size={15} />{member.occupation}</span> : null}
               {member.ministry_department ? <span><Church size={15} />{member.ministry_department}</span> : null}
               {member.emergency_contact_name || member.emergency_contact_phone ? (

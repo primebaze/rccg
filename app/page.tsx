@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import {
   BriefcaseBusiness,
@@ -37,10 +38,8 @@ export default function Home() {
       maritalStatus: formData.get("maritalStatus"),
       isOrdained: formData.get("isOrdained") === "on",
       addressLine1: formData.get("addressLine1"),
-      addressLine2: formData.get("addressLine2"),
       city: formData.get("city"),
       postalCode: formData.get("postalCode"),
-      country: formData.get("country"),
       occupation: formData.get("occupation"),
       ministryDepartment: formData.get("ministryDepartment"),
       emergencyContactName: formData.get("emergencyContactName"),
@@ -69,14 +68,14 @@ export default function Home() {
       <section className="onboarding-panel">
         <div className="brand-mark" aria-label="RCCG">
           <CalendarHeart size={26} />
-          <span>RCCG</span>
+          <span>RCCG WORSHIP TABERNACLE</span>
         </div>
 
         <div className="intro">
           <p>Member onboarding</p>
           <h1>Complete your member profile</h1>
           <span>
-            Share your details so the church office can keep your member record current and stay in touch when needed.
+            Share your details so we can keep your record current and stay in touch when needed.
           </span>
         </div>
 
@@ -138,12 +137,7 @@ export default function Home() {
             <input name="addressLine1" autoComplete="address-line1" required />
           </label>
 
-          <label>
-            <span><HomeIcon size={16} />Address line 2</span>
-            <input name="addressLine2" autoComplete="address-line2" />
-          </label>
-
-          <div className="field-grid three">
+          <div className="field-grid">
             <label>
               <span><MapPin size={16} />City</span>
               <input name="city" autoComplete="address-level2" required />
@@ -151,10 +145,6 @@ export default function Home() {
             <label>
               <span><MapPin size={16} />Postcode</span>
               <input name="postalCode" autoComplete="postal-code" required />
-            </label>
-            <label>
-              <span><MapPin size={16} />Country</span>
-              <input name="country" autoComplete="country-name" defaultValue="Netherlands" required />
             </label>
           </div>
 
@@ -179,6 +169,10 @@ export default function Home() {
             Complete registration
           </button>
 
+          <p className="legal-links">
+            By submitting, you agree to our <Link href="/terms">Terms</Link> and <Link href="/privacy">Privacy Policy</Link>.
+          </p>
+
           {message ? <p className={`form-message ${status}`}>{message}</p> : null}
         </form>
       </section>
@@ -187,12 +181,12 @@ export default function Home() {
         <div className="care-card primary">
           <ShieldCheck size={24} />
           <h2>Secure member records</h2>
-          <p>Your details help the church office care for members with accurate contact information.</p>
+          <p>Your details help us care for members with accurate contact information.</p>
         </div>
         <div className="care-card">
           <Mail size={22} />
           <h2>Simple communication</h2>
-          <p>Choose how the church may contact you for important member updates.</p>
+          <p>Choose how we may contact you for important member updates.</p>
         </div>
       </aside>
     </main>
