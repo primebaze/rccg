@@ -376,7 +376,7 @@ export function AdminDashboard({ initialMembers, view }: AdminDashboardProps) {
         <div className="manager-brand">
           <LayoutDashboard size={24} />
           <div>
-            <strong>RCCG</strong>
+            <strong>RCCG WORSHIP TABERNACLE</strong>
             <span>Member manager</span>
           </div>
         </div>

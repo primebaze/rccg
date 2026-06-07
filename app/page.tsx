@@ -81,7 +81,7 @@ export default function Home() {
             <CheckCircle2 size={44} />
           </div>
           <p className="success-kicker">Registration complete</p>
-          <h1>You&apos;re all set, welcome to the RCCG family!</h1>
+          <h1>You&apos;re all set, welcome to the WORSHIP TABERNACLE family!</h1>
           <p className="success-text">
             {message || "Your member profile has been received. We’ll be in touch with important updates."}
           </p>

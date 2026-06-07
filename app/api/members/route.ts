@@ -34,7 +34,7 @@ export async function POST(request: Request) {
   //  2. Submitted impossibly fast (real users take more than ~2.5s to fill in).
   const elapsed = typeof payload?.ts === "number" ? Date.now() - payload.ts : Number.POSITIVE_INFINITY;
   if (member.website || elapsed < 2500) {
-    return NextResponse.json({ message: "You are registered. Welcome to the RCCG family." });
+    return NextResponse.json({ message: "You are registered. Welcome!." });
   }
 
   const supabase = getSupabaseAdmin();
@@ -73,5 +73,5 @@ export async function POST(request: Request) {
     console.error("Failed to send member signup confirmation", sendError);
   });
 
-  return NextResponse.json({ message: "You are registered. Welcome to the RCCG family." });
+  return NextResponse.json({ message: "You are registered. Welcome to the WORSHIP TABERNACLE family!" });
 }
