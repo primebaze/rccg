@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
+  ArrowRight,
   BriefcaseBusiness,
   CalendarHeart,
   Check,
+  CheckCircle2,
   Church,
   HeartHandshake,
   HomeIcon,
@@ -69,6 +71,37 @@ export default function Home() {
     if (response.ok) {
       event.currentTarget.reset();
     }
+  }
+
+  if (status === "success") {
+    return (
+      <main className="success-shell">
+        <section className="success-panel">
+          <div className="success-icon" aria-hidden="true">
+            <CheckCircle2 size={44} />
+          </div>
+          <p className="success-kicker">Registration complete</p>
+          <h1>You&apos;re all set, welcome to the RCCG family!</h1>
+          <p className="success-text">
+            {message || "Your member profile has been received. We’ll be in touch with important updates."}
+          </p>
+          <a className="success-cta" href="https://rccgwt.co.uk" target="_blank" rel="noopener noreferrer">
+            Visit Our Website
+            <ArrowRight size={18} />
+          </a>
+          <button
+            type="button"
+            className="success-secondary"
+            onClick={() => {
+              setStatus("idle");
+              setMessage("");
+            }}
+          >
+            Register another member
+          </button>
+        </section>
+      </main>
+    );
   }
 
   return (
