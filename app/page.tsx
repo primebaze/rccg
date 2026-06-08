@@ -146,7 +146,7 @@ export default function Home() {
 
           <label>
             <span><Phone size={16} />Mobile number</span>
-            <input name="phone" type="tel" autoComplete="tel" placeholder="+31 6 1234 5678" required />
+            <input name="phone" type="tel" autoComplete="tel" required />
           </label>
 
           <label>
