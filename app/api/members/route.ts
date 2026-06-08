@@ -29,11 +29,10 @@ export async function POST(request: Request) {
 
   const member = parsed.data;
 
-  // Bot traps — return a decoy success so bots don't learn they were filtered:
-  //  1. Honeypot field filled.
-  //  2. Submitted impossibly fast (real users take more than ~2.5s to fill in).
-  const elapsed = typeof payload?.ts === "number" ? Date.now() - payload.ts : Number.POSITIVE_INFINITY;
-  if (member.website || elapsed < 2500) {
+  // Bot trap: return a decoy success so bots don't learn they were filtered.
+  // Do not block fast submits here; autofill or repeated church onboarding can
+  // be quick and still be a real member registration.
+  if (member.website) {
     return NextResponse.json({ message: "You are registered. Welcome!." });
   }
 
@@ -69,9 +68,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 
-  sendMemberSignupConfirmation(member).catch((sendError) => {
-    console.error("Failed to send member signup confirmation", sendError);
-  });
+  try {
+    const emailResult = await sendMemberSignupConfirmation(member);
+
+    if (emailResult.skipped) {
+      console.info("Member signup confirmation email skipped", {
+        email: member.email.toLowerCase(),
+        reason: emailResult.reason
+      });
+    } else if (emailResult.error) {
+      console.error("Failed to send member signup confirmation", {
+        email: member.email.toLowerCase(),
+        error: emailResult.error
+      });
+    } else {
+      console.info("Member signup confirmation email sent", {
+        email: member.email.toLowerCase(),
+        id: emailResult.id
+      });
+    }
+  } catch (sendError) {
+    console.error("Failed to send member signup confirmation", {
+      email: member.email.toLowerCase(),
+      error: sendError
+    });
+  }
 
   return NextResponse.json({ message: "You are registered. Welcome to the WORSHIP TABERNACLE family!" });
 }

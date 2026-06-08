@@ -6,6 +6,10 @@ import { fullName } from "@/lib/birthday";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
+type EmailSendResult =
+  | { skipped: true; reason: string }
+  | { skipped: false; id?: string; error?: unknown };
+
 function fromEmail() {
   return process.env.RESEND_FROM_EMAIL ?? "RCCG Members <onboarding@resend.dev>";
 }
@@ -19,10 +23,11 @@ function escapeHtml(value: string) {
     .replaceAll("'", "&#039;");
 }
 
-export async function sendMemberSignupConfirmation(member: MemberFormInput) {
-  if (!resend || !member.consentEmail) return { skipped: true };
+export async function sendMemberSignupConfirmation(member: MemberFormInput): Promise<EmailSendResult> {
+  if (!resend) return { skipped: true, reason: "RESEND_API_KEY is not configured" };
+  if (!member.consentEmail) return { skipped: true, reason: "email consent is disabled" };
 
-  return resend.emails.send({
+  const result = await resend.emails.send({
     from: fromEmail(),
     to: member.email,
     subject: "Your member profile has been received",
@@ -38,6 +43,12 @@ export async function sendMemberSignupConfirmation(member: MemberFormInput) {
       </div>
     `
   });
+
+  if (result.error) {
+    return { skipped: false, error: result.error };
+  }
+
+  return { skipped: false, id: result.data?.id };
 }
 
 export async function sendMemberBirthdayEmail(member: Member) {
