@@ -20,10 +20,28 @@ import {
 } from "lucide-react";
 
 type FormState = "idle" | "submitting" | "success" | "error";
+type FieldErrors = Record<string, string[] | undefined>;
+
+const fieldLabels: Record<string, string> = {
+  firstName: "First name",
+  lastName: "Last name",
+  email: "Email address",
+  phone: "Mobile number",
+  dateOfBirth: "Date of birth",
+  maritalStatus: "Marital status",
+  addressLine1: "Address",
+  city: "City",
+  postalCode: "Postcode",
+  occupation: "Occupation",
+  ministryDepartment: "Ministry or department",
+  emergencyContactName: "Emergency contact",
+  emergencyContactPhone: "Emergency phone"
+};
 
 export default function Home() {
   const [status, setStatus] = useState<FormState>("idle");
   const [message, setMessage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<string[]>([]);
   // Records when the form became interactive, used as a bot submit-speed trap.
   const loadedAt = useRef(0);
 
@@ -35,6 +53,7 @@ export default function Home() {
     event.preventDefault();
     setStatus("submitting");
     setMessage("");
+    setFieldErrors([]);
 
     const formData = new FormData(event.currentTarget);
     const payload = {
@@ -68,8 +87,18 @@ export default function Home() {
     setStatus(response.ok ? "success" : "error");
     setMessage(result.message ?? "Something went wrong. Please try again.");
 
+    if (!response.ok && result.errors) {
+      const errors = result.errors as FieldErrors;
+      setFieldErrors(
+        Object.entries(errors).flatMap(([field, messages]) =>
+          (messages ?? []).map((errorMessage) => `${fieldLabels[field] ?? field}: ${errorMessage}`)
+        )
+      );
+    }
+
     if (response.ok) {
       event.currentTarget.reset();
+      setFieldErrors([]);
     }
   }
 
@@ -221,7 +250,18 @@ export default function Home() {
             By submitting, you agree to our <Link href="/terms">Terms</Link> and <Link href="/privacy">Privacy Policy</Link>.
           </p>
 
-          {message ? <p className={`form-message ${status}`}>{message}</p> : null}
+          {message ? (
+            <div className={`form-message ${status}`}>
+              <p>{message}</p>
+              {fieldErrors.length > 0 ? (
+                <ul className="form-error-list">
+                  {fieldErrors.map((errorMessage) => (
+                    <li key={errorMessage}>{errorMessage}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          ) : null}
         </form>
       </section>
 
