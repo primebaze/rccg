@@ -343,6 +343,43 @@ export function AdminDashboard({ initialMembers, view }: AdminDashboardProps) {
       subject: formData.get("subject"),
       body: formData.get("body")
     };
+
+    if (messageAction.channel === "email") {
+      if (messageAction.members.length > 100) {
+        setSending(false);
+        setMessageAction(null);
+        setNotice("A single email batch supports up to 100 members. Narrow the member list and try again.");
+        return;
+      }
+
+      const response = await fetch("/api/admin/messages/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          memberIds: messageAction.members.map((member) => member.id),
+          subject: payload.subject,
+          body: payload.body,
+          requestId: crypto.randomUUID()
+        })
+      });
+      const result = await response.json();
+
+      setSending(false);
+
+      if (!response.ok) {
+        setNotice(result.message ?? "Could not send email batch.");
+        return;
+      }
+
+      setMessageAction(null);
+      setNotice(
+        `Email sent to ${result.sent} member${result.sent === 1 ? "" : "s"}${
+          result.skipped ? `; ${result.skipped} skipped because email is disabled` : ""
+        }.`
+      );
+      return;
+    }
+
     const results = await Promise.all(
       messageAction.members.map(async (member) => {
         const response = await fetch(`/api/admin/members/${member.id}/message`, {
@@ -364,7 +401,7 @@ export function AdminDashboard({ initialMembers, view }: AdminDashboardProps) {
 
     setMessageAction(null);
     setNotice(
-      `${messageAction.channel === "email" ? "Email" : "SMS"} sent to ${messageAction.members.length} member${
+      `SMS sent to ${messageAction.members.length} member${
         messageAction.members.length === 1 ? "" : "s"
       }.`
     );
@@ -527,7 +564,7 @@ export function AdminDashboard({ initialMembers, view }: AdminDashboardProps) {
             <article>
               <Mail size={28} />
               <h2>Email members</h2>
-              <p>Send a custom email to every member, or narrow the list first using the member directory.</p>
+              <p>Send one private email per member in a Resend batch of up to 100 recipients.</p>
               <button
                 className="submit-button"
                 disabled={members.length === 0}

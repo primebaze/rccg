@@ -10,6 +10,10 @@ type EmailSendResult =
   | { skipped: true; reason: string }
   | { skipped: false; id?: string; error?: unknown };
 
+type BatchEmailSendResult =
+  | { skipped: true; reason: string; sent: 0 }
+  | { skipped: false; sent: number; ids: string[]; error?: unknown };
+
 function fromEmail() {
   return process.env.RESEND_FROM_EMAIL ?? "RCCG Members <onboarding@resend.dev>";
 }
@@ -21,6 +25,19 @@ function escapeHtml(value: string) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function customEmailHtml(body: string) {
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#17211f;max-width:640px">
+      ${body
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => `<p>${escapeHtml(line)}</p>`)
+        .join("")}
+      <p style="margin-top:24px">RCCG Worship Tabernacle</p>
+    </div>
+  `;
 }
 
 export async function sendMemberSignupConfirmation(member: MemberFormInput): Promise<EmailSendResult> {
@@ -69,6 +86,45 @@ export async function sendMemberBirthdayEmail(member: Member) {
   });
 }
 
+export async function sendMemberBirthdayEmailBatch(
+  members: Member[],
+  idempotencyKey: string
+): Promise<BatchEmailSendResult> {
+  if (!resend) return { skipped: true, reason: "RESEND_API_KEY is not configured", sent: 0 };
+
+  const recipients = members.filter((member) => member.consent_email);
+  if (recipients.length === 0) {
+    return { skipped: true, reason: "No birthday emails to send", sent: 0 };
+  }
+  if (recipients.length > 100) {
+    return { skipped: true, reason: "A Resend batch can contain at most 100 emails", sent: 0 };
+  }
+
+  const result = await resend.batch.send(
+    recipients.map((member) => ({
+      from: fromEmail(),
+      to: member.email,
+      subject: `Happy birthday, ${member.first_name}!`,
+      html: `
+        <div style="font-family:Arial,sans-serif;line-height:1.6;color:#17211f">
+          <h1 style="color:#0f766e">Happy birthday, ${escapeHtml(member.first_name)}!</h1>
+          <p>Today we celebrate you and thank God for your life.</p>
+          <p>May this new year bring joy, strength, wisdom, and fresh grace.</p>
+          <p>With love,<br/>RCCG Family</p>
+        </div>
+      `
+    })),
+    { idempotencyKey }
+  );
+
+  if (result.error) {
+    return { skipped: false, sent: 0, ids: [], error: result.error };
+  }
+
+  const ids = result.data?.data.map((email) => email.id) ?? [];
+  return { skipped: false, sent: ids.length, ids };
+}
+
 export async function sendMemberBirthdaySms(member: Member) {
   if (!member.consent_sms) return { skipped: true };
 
@@ -94,17 +150,43 @@ export async function sendCustomMemberEmail(member: Member, subject: string, bod
     to: member.email,
     subject,
     text: body,
-    html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#17211f;max-width:640px">
-        ${body
-          .split("\n")
-          .filter(Boolean)
-          .map((line) => `<p>${escapeHtml(line)}</p>`)
-          .join("")}
-        <p style="margin-top:24px">RCCG Worship Tabernacle</p>
-      </div>
-    `
+    html: customEmailHtml(body)
   });
+}
+
+export async function sendCustomMemberEmailBatch(
+  members: Member[],
+  subject: string,
+  body: string,
+  idempotencyKey: string
+): Promise<BatchEmailSendResult> {
+  if (!resend) return { skipped: true, reason: "RESEND_API_KEY is not configured", sent: 0 };
+
+  const recipients = members.filter((member) => member.consent_email);
+  if (recipients.length === 0) {
+    return { skipped: true, reason: "No selected members have email enabled", sent: 0 };
+  }
+  if (recipients.length > 100) {
+    return { skipped: true, reason: "A Resend batch can contain at most 100 emails", sent: 0 };
+  }
+
+  const result = await resend.batch.send(
+    recipients.map((member) => ({
+      from: fromEmail(),
+      to: member.email,
+      subject,
+      text: body,
+      html: customEmailHtml(body)
+    })),
+    { idempotencyKey }
+  );
+
+  if (result.error) {
+    return { skipped: false, sent: 0, ids: [], error: result.error };
+  }
+
+  const ids = result.data?.data.map((email) => email.id) ?? [];
+  return { skipped: false, sent: ids.length, ids };
 }
 
 export async function sendCustomMemberSms(member: Member, body: string) {

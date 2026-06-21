@@ -3,7 +3,7 @@ import { addDays, getReminderDays, membersForBirthday } from "@/lib/birthday";
 import type { Member } from "@/lib/member-schema";
 import {
   sendAdminBirthdayEmail,
-  sendMemberBirthdayEmail,
+  sendMemberBirthdayEmailBatch,
   sendMemberBirthdaySms
 } from "@/lib/notifications";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
@@ -30,22 +30,27 @@ async function runBirthdayJob() {
   const today = new Date();
   const todaysBirthdays = membersForBirthday(members, today);
   const reminderDays = getReminderDays();
+  const dateKey = [today.getFullYear(), today.getMonth() + 1, today.getDate()].join("-");
 
-  const memberNotifications = await Promise.allSettled(
-    todaysBirthdays.flatMap((member) => [sendMemberBirthdayEmail(member), sendMemberBirthdaySms(member)])
+  const memberEmailResult = await sendMemberBirthdayEmailBatch(
+    todaysBirthdays,
+    `birthday-members-${dateKey}`
   );
-  const adminToday = await Promise.allSettled([sendAdminBirthdayEmail(todaysBirthdays)]);
+  const memberSmsResults = await Promise.allSettled(todaysBirthdays.map((member) => sendMemberBirthdaySms(member)));
+  const adminToday = await sendAdminBirthdayEmail(todaysBirthdays);
 
-  const adminReminders = await Promise.allSettled(
-    reminderDays.map((days) => sendAdminBirthdayEmail(membersForBirthday(members, addDays(today, days)), days))
-  );
+  const adminReminders = [];
+  for (const days of reminderDays) {
+    adminReminders.push(await sendAdminBirthdayEmail(membersForBirthday(members, addDays(today, days)), days));
+  }
 
   return {
     checked: members.length,
     birthdaysToday: todaysBirthdays.length,
     reminderDays,
-    memberNotifications: memberNotifications.length,
-    adminNotifications: adminToday.length + adminReminders.length
+    memberEmails: memberEmailResult.skipped ? 0 : memberEmailResult.sent,
+    memberSmsNotifications: memberSmsResults.length,
+    adminNotifications: ("skipped" in adminToday && adminToday.skipped ? 0 : 1) + adminReminders.length
   };
 }
 
