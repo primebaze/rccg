@@ -78,22 +78,11 @@ Custom email requires `RESEND_API_KEY` and `RESEND_FROM_EMAIL`. Custom SMS requi
 
 ## Birthday Scheduler
 
-Supabase free tier should only be used here as the database. Do not rely on Supabase cron for this app.
-
-The included GitHub Actions workflow calls the birthday endpoint every day at 07:00 UTC:
-
-```text
-.github/workflows/birthday-cron.yml
-```
-
-Add these repository secrets in GitHub:
-
-```text
-APP_URL=https://your-domain.com
-CRON_SECRET=YOUR_CRON_SECRET
-```
-
-You can also run it manually from the GitHub Actions tab with `workflow_dispatch`.
+Birthday notifications send themselves — no GitHub Action and no one needs to
+visit the site. A **Supabase `pg_cron` job** runs every morning (07:00 UTC) and
+makes an authenticated call to the birthday endpoint, which does the sending and
+de-duplicates so it only ever runs once per calendar day (tracked in the
+`birthday_runs` table).
 
 The endpoint it calls is:
 
@@ -102,6 +91,39 @@ GET https://your-domain.com/api/cron/birthdays
 Authorization: Bearer YOUR_CRON_SECRET
 ```
 
-The endpoint checks today’s birthdays, sends member birthday messages, emails admin for birthdays today, and sends admin reminders using `BIRTHDAY_REMINDER_DAYS`.
+It checks today’s birthdays, sends member birthday messages, emails admin for
+birthdays today, and sends admin reminders using `BIRTHDAY_REMINDER_DAYS`.
 
-If you do not want to use GitHub Actions, use any external scheduler that can send an authorization header, such as cron-job.org, EasyCron, or a Vercel Cron Job.
+### Setting up the Supabase job
+
+Store the app URL and the shared secret in Supabase Vault (so nothing sensitive
+lives in SQL), enable the extensions, and schedule the job. The full SQL is in
+`supabase/schema.sql`. In short:
+
+```sql
+select vault.create_secret('https://your-domain.com', 'birthday_app_url');
+select vault.create_secret('YOUR_CRON_SECRET', 'birthday_cron_secret');
+
+create extension if not exists pg_cron;
+create extension if not exists pg_net;
+
+select cron.schedule(
+  'daily-birthday-notifications',
+  '0 7 * * *',
+  $$
+    select net.http_post(
+      url := (select decrypted_secret from vault.decrypted_secrets
+              where name = 'birthday_app_url') || '/api/cron/birthdays',
+      headers := jsonb_build_object(
+        'Content-Type', 'application/json',
+        'Authorization', 'Bearer ' || (select decrypted_secret
+          from vault.decrypted_secrets where name = 'birthday_cron_secret')
+      )
+    );
+  $$
+);
+```
+
+`CRON_SECRET` must match the value set in the app's environment. Because a daily
+Supabase job keeps the database active, the project also won't be auto-paused as
+long as the schedule is running.
