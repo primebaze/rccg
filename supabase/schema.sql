@@ -27,6 +27,56 @@ create table if not exists public.members (
 
 create index if not exists members_date_of_birth_idx on public.members (date_of_birth);
 
+-- Tracks which calendar days the birthday job has already run for, so the
+-- daily runner sends exactly once per day. The primary key gives us an atomic
+-- "claim the day" via insert: the first request of the day succeeds, the rest
+-- hit a unique violation and skip.
+create table if not exists public.birthday_runs (
+  run_date date primary key,
+  created_at timestamptz not null default now()
+);
+
+alter table public.birthday_runs enable row level security;
+
+create policy "Service role manages birthday_runs"
+  on public.birthday_runs
+  for all
+  using (auth.role() = 'service_role')
+  with check (auth.role() = 'service_role');
+
+-- Automatic birthday notifications, driven entirely by Supabase (no GitHub
+-- Action, no site visit). A pg_cron job wakes up every morning and makes an
+-- authenticated HTTP call to the app's /api/cron/birthdays endpoint, which does
+-- the actual sending (Resend + Twilio) and de-duplicates via birthday_runs.
+--
+-- The endpoint URL and shared secret are read from Supabase Vault so no secret
+-- is committed here. Create them once (values shown are placeholders):
+--
+--   select vault.create_secret('https://your-domain.com', 'birthday_app_url');
+--   select vault.create_secret('YOUR_CRON_SECRET', 'birthday_cron_secret');
+--
+-- CRON_SECRET must match the value set in the app's environment. Enable the
+-- required extensions and schedule the job (07:00 UTC daily):
+--
+--   create extension if not exists pg_cron;
+--   create extension if not exists pg_net;
+--
+--   select cron.schedule(
+--     'daily-birthday-notifications',
+--     '0 7 * * *',
+--     $$
+--       select net.http_post(
+--         url := (select decrypted_secret from vault.decrypted_secrets
+--                 where name = 'birthday_app_url') || '/api/cron/birthdays',
+--         headers := jsonb_build_object(
+--           'Content-Type', 'application/json',
+--           'Authorization', 'Bearer ' || (select decrypted_secret
+--             from vault.decrypted_secrets where name = 'birthday_cron_secret')
+--         )
+--       );
+--     $$
+--   );
+
 create index if not exists members_marital_status_idx on public.members (marital_status);
 create index if not exists members_is_ordained_idx on public.members (is_ordained);
 
