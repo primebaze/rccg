@@ -5,18 +5,30 @@ const title = "RCCG Worship Tabernacle — Member Registration";
 const description = "Complete your member profile so we can keep your record current and stay in touch.";
 
 export const metadata: Metadata = {
+  // Required so the relative OG image path below resolves to an absolute URL,
+  // which link previews (WhatsApp, Facebook, X, LinkedIn) need.
+  metadataBase: new URL("https://member.rccgwt.co.uk"),
   title,
   description,
   openGraph: {
     title,
     description,
     siteName: "RCCG Worship Tabernacle",
-    type: "website"
+    type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "RCCG Worship Tabernacle"
+      }
+    ]
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title,
-    description
+    description,
+    images: ["/og-image.png"]
   }
 };
 

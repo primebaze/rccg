@@ -1,6 +1,6 @@
-# RCCG Member Birthdays
+# RCCG Worship Tabernacle — Member Registration
 
-A Next.js, Supabase, Resend, and optional Twilio app for member onboarding and automatic birthday care.
+A Next.js, Supabase, Resend, and optional Twilio app for member registration and ongoing member care.
 
 ## Features
 
