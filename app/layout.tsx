@@ -5,8 +5,8 @@ const title = "RCCG Worship Tabernacle — Member Registration";
 const description = "Complete your member profile so we can keep your record current and stay in touch.";
 
 export const metadata: Metadata = {
-  // Required so the relative OG image path below resolves to an absolute URL,
-  // which link previews (WhatsApp, Facebook, X, LinkedIn) need.
+  // Lets Next.js turn the generated opengraph-image route into the absolute URL
+  // that link previews (WhatsApp, Facebook, X, LinkedIn) require.
   metadataBase: new URL("https://member.rccgwt.co.uk"),
   title,
   description,
@@ -14,21 +14,12 @@ export const metadata: Metadata = {
     title,
     description,
     siteName: "RCCG Worship Tabernacle",
-    type: "website",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "RCCG Worship Tabernacle"
-      }
-    ]
+    type: "website"
   },
   twitter: {
     card: "summary_large_image",
     title,
-    description,
-    images: ["/og-image.png"]
+    description
   }
 };
 
