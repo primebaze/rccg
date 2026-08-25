@@ -33,8 +33,15 @@ create index if not exists members_date_of_birth_idx on public.members (date_of_
 -- hit a unique violation and skip.
 create table if not exists public.birthday_runs (
   run_date date primary key,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  -- Summary of what that day's job actually sent. pg_net drops HTTP responses
+  -- after a few hours, so this is the durable record for diagnosing a missed
+  -- send: `select run_date, result from birthday_runs order by run_date desc;`
+  result jsonb
 );
+
+-- For databases created before the result column existed:
+alter table public.birthday_runs add column if not exists result jsonb;
 
 alter table public.birthday_runs enable row level security;
 
