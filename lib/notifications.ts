@@ -68,6 +68,10 @@ export async function sendMemberSignupConfirmation(member: MemberFormInput): Pro
   return { skipped: false, id: result.data?.id };
 }
 
+function birthdayText(firstName: string) {
+  return `Happy birthday, ${firstName}!\n\nToday we celebrate you and thank God for your life.\n\nMay this new year bring joy, strength, wisdom, and fresh grace.\n\nWith love,\nRCCG Family`;
+}
+
 export async function sendMemberBirthdayEmail(member: Member) {
   if (!resend || !member.consent_email) return { skipped: true };
 
@@ -75,6 +79,7 @@ export async function sendMemberBirthdayEmail(member: Member) {
     from: fromEmail(),
     to: member.email,
     subject: `Happy birthday, ${member.first_name}!`,
+    text: birthdayText(member.first_name),
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.6;color:#17211f">
         <h1 style="color:#0f766e">Happy birthday, ${member.first_name}!</h1>
@@ -105,6 +110,7 @@ export async function sendMemberBirthdayEmailBatch(
       from: fromEmail(),
       to: member.email,
       subject: `Happy birthday, ${member.first_name}!`,
+      text: birthdayText(member.first_name),
       html: `
         <div style="font-family:Arial,sans-serif;line-height:1.6;color:#17211f">
           <h1 style="color:#0f766e">Happy birthday, ${escapeHtml(member.first_name)}!</h1>
@@ -226,10 +232,15 @@ export async function sendAdminBirthdayEmail(members: Member[], reminderDays?: n
     )
     .join("");
 
+  const textRows = members
+    .map((member) => `- ${fullName(member)} | ${member.email} | ${member.phone}`)
+    .join("\n");
+
   return resend.emails.send({
     from: fromEmail(),
     to: process.env.ADMIN_EMAIL,
     subject,
+    text: `${reminderDays === undefined ? "Birthday today" : "Upcoming birthday reminder"}\n\n${textRows}`,
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.6;color:#17211f">
         <h1 style="color:#0f766e">${reminderDays === undefined ? "Birthday today" : "Upcoming birthday reminder"}</h1>
