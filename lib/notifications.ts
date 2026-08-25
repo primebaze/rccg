@@ -3,6 +3,7 @@ import twilio from "twilio";
 import type { Member } from "@/lib/member-schema";
 import type { MemberFormInput } from "@/lib/member-schema";
 import { fullName } from "@/lib/birthday";
+import { toE164 } from "@/lib/phone";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -165,7 +166,7 @@ export async function sendMemberBirthdaySms(member: Member) {
   const { client, from } = sender;
   return client.messages.create({
     from,
-    to: member.phone,
+    to: toE164(member.phone),
     body: `Happy birthday, ${member.first_name}! RCCG celebrates you today. May God bless your new year with joy and grace.`
   });
 }
@@ -226,7 +227,7 @@ export async function sendCustomMemberSms(member: Member, body: string) {
   const { client, from } = sender;
   return client.messages.create({
     from,
-    to: member.phone,
+    to: toE164(member.phone),
     body
   });
 }
