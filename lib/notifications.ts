@@ -22,6 +22,25 @@ function replyToAddress() {
   return process.env.REPLY_TO_EMAIL ?? process.env.ADMIN_EMAIL ?? undefined;
 }
 
+// Twilio credentials. A restricted API key is preferred: it can be scoped to
+// just sending messages and rotated without touching the account. The account
+// auth token still works as a fallback, but it grants full account access.
+function twilioSender() {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const from = process.env.TWILIO_FROM_PHONE;
+  if (!accountSid || !from) return null;
+
+  const apiKeySid = process.env.TWILIO_API_KEY_SID;
+  const apiKeySecret = process.env.TWILIO_API_KEY_SECRET;
+  if (apiKeySid && apiKeySecret) {
+    return { client: twilio(apiKeySid, apiKeySecret, { accountSid }), from };
+  }
+
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (!authToken) return null;
+  return { client: twilio(accountSid, authToken), from };
+}
+
 function escapeHtml(value: string) {
   return value
     .replaceAll("&", "&amp;")
@@ -140,13 +159,10 @@ export async function sendMemberBirthdayEmailBatch(
 export async function sendMemberBirthdaySms(member: Member) {
   if (!member.consent_sms) return { skipped: true };
 
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const from = process.env.TWILIO_FROM_PHONE;
+  const sender = twilioSender();
+  if (!sender) return { skipped: true };
 
-  if (!accountSid || !authToken || !from) return { skipped: true };
-
-  const client = twilio(accountSid, authToken);
+  const { client, from } = sender;
   return client.messages.create({
     from,
     to: member.phone,
@@ -204,13 +220,10 @@ export async function sendCustomMemberEmailBatch(
 export async function sendCustomMemberSms(member: Member, body: string) {
   if (!member.consent_sms) return { skipped: true };
 
-  const accountSid = process.env.TWILIO_ACCOUNT_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const from = process.env.TWILIO_FROM_PHONE;
+  const sender = twilioSender();
+  if (!sender) return { skipped: true };
 
-  if (!accountSid || !authToken || !from) return { skipped: true };
-
-  const client = twilio(accountSid, authToken);
+  const { client, from } = sender;
   return client.messages.create({
     from,
     to: member.phone,

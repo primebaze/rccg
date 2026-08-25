@@ -74,7 +74,19 @@ Member actions:
 - `Send email` sends a custom email through Resend.
 - `Send SMS` sends a custom SMS through Twilio.
 
-Custom email requires `RESEND_API_KEY` and `RESEND_FROM_EMAIL`. Custom SMS requires `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_FROM_PHONE`.
+Custom email requires `RESEND_API_KEY` and `RESEND_FROM_EMAIL`.
+
+SMS requires `TWILIO_ACCOUNT_SID` and `TWILIO_FROM_PHONE`, plus credentials.
+Prefer a restricted API key, which can be scoped to sending messages and
+rotated without touching the account:
+
+```text
+TWILIO_API_KEY_SID=SKxxxxxxxx
+TWILIO_API_KEY_SECRET=your-api-key-secret
+```
+
+`TWILIO_AUTH_TOKEN` is still accepted as a fallback, but it grants full
+account access, so the API key is the safer choice.
 
 ## Birthday Scheduler
 
