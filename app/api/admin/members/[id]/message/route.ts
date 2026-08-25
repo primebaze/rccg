@@ -7,7 +7,9 @@ import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 const messageSchema = z.object({
   channel: z.enum(["email", "sms"]),
-  subject: z.string().trim().max(120).optional(),
+  // SMS sends carry no subject field, so the client posts null rather than
+  // omitting the key. optional() alone rejects null.
+  subject: z.string().trim().max(120).nullish(),
   body: z.string().trim().min(3).max(1600)
 });
 
