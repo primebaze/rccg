@@ -58,6 +58,40 @@ function csvEscape(value: string | number | boolean | null | undefined) {
   return `"${text.replaceAll('"', '""')}"`;
 }
 
+async function postJson(url: string, body: unknown, timeoutMs = 30_000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+    const text = await response.text();
+    let result: { message?: string; sent?: number; skipped?: number } = {};
+    try {
+      result = text ? JSON.parse(text) : {};
+    } catch {
+      result = { message: `Server returned an unexpected response (${response.status}).` };
+    }
+    return { ok: response.ok, result };
+  } catch (error) {
+    const aborted = error instanceof DOMException && error.name === "AbortError";
+    return {
+      ok: false,
+      result: {
+        message: aborted
+          ? "The request timed out. It may still be sending - check before retrying."
+          : "Could not reach the server. Check your connection and try again."
+      } as { message?: string; sent?: number; skipped?: number }
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function memberToForm(member: Member) {
   return {
     ...member,
@@ -353,21 +387,16 @@ export function AdminDashboard({ initialMembers, view }: AdminDashboardProps) {
         return;
       }
 
-      const response = await fetch("/api/admin/messages/email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          memberIds: messageAction.members.map((member) => member.id),
-          subject: payload.subject,
-          body: payload.body,
-          requestId: crypto.randomUUID()
-        })
+      const { ok, result } = await postJson("/api/admin/messages/email", {
+        memberIds: messageAction.members.map((member) => member.id),
+        subject: payload.subject,
+        body: payload.body,
+        requestId: crypto.randomUUID()
       });
-      const result = await response.json();
 
       setSending(false);
 
-      if (!response.ok) {
+      if (!ok) {
         setMessageError(result.message ?? "Could not send email batch.");
         return;
       }
@@ -382,14 +411,7 @@ export function AdminDashboard({ initialMembers, view }: AdminDashboardProps) {
     }
 
     const results = await Promise.all(
-      messageAction.members.map(async (member) => {
-        const response = await fetch(`/api/admin/members/${member.id}/message`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        return { ok: response.ok, result: await response.json() };
-      })
+      messageAction.members.map((member) => postJson(`/api/admin/members/${member.id}/message`, payload))
     );
 
     setSending(false);
