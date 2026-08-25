@@ -18,6 +18,10 @@ function fromEmail() {
   return process.env.RESEND_FROM_EMAIL ?? "RCCG Members <onboarding@resend.dev>";
 }
 
+function replyToAddress() {
+  return process.env.REPLY_TO_EMAIL ?? process.env.ADMIN_EMAIL ?? undefined;
+}
+
 function escapeHtml(value: string) {
   return value
     .replaceAll("&", "&amp;")
@@ -79,10 +83,11 @@ export async function sendMemberBirthdayEmail(member: Member) {
     from: fromEmail(),
     to: member.email,
     subject: `Happy birthday, ${member.first_name}!`,
+    replyTo: replyToAddress(),
     text: birthdayText(member.first_name),
     html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#17211f">
-        <h1 style="color:#0f766e">Happy birthday, ${member.first_name}!</h1>
+      <div style="font-family:Arial,sans-serif;font-size:16px;line-height:1.6;color:#17211f">
+        <p>Happy birthday, ${escapeHtml(member.first_name)}!</p>
         <p>Today we celebrate you and thank God for your life.</p>
         <p>May this new year bring joy, strength, wisdom, and fresh grace.</p>
         <p>With love,<br/>RCCG Family</p>
@@ -110,10 +115,11 @@ export async function sendMemberBirthdayEmailBatch(
       from: fromEmail(),
       to: member.email,
       subject: `Happy birthday, ${member.first_name}!`,
+      replyTo: replyToAddress(),
       text: birthdayText(member.first_name),
       html: `
-        <div style="font-family:Arial,sans-serif;line-height:1.6;color:#17211f">
-          <h1 style="color:#0f766e">Happy birthday, ${escapeHtml(member.first_name)}!</h1>
+        <div style="font-family:Arial,sans-serif;font-size:16px;line-height:1.6;color:#17211f">
+          <p>Happy birthday, ${escapeHtml(member.first_name)}!</p>
           <p>Today we celebrate you and thank God for your life.</p>
           <p>May this new year bring joy, strength, wisdom, and fresh grace.</p>
           <p>With love,<br/>RCCG Family</p>
