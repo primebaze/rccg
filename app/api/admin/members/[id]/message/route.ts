@@ -75,17 +75,29 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   const member = data as Member;
-  const result =
-    parsed.data.channel === "email"
-      ? await sendCustomMemberEmail(member, parsed.data.subject || "Message from RCCG Worship Tabernacle", parsed.data.body)
-      : await sendCustomMemberSms(member, parsed.data.body);
+  const channelLabel = parsed.data.channel === "email" ? "Email" : "SMS";
+
+  // Twilio rejects on API errors (bad credentials, unverified trial recipient,
+  // an unreachable region). Without this the reason is lost as a bare 500 and
+  // the dialog can only say "could not send".
+  let result;
+  try {
+    result =
+      parsed.data.channel === "email"
+        ? await sendCustomMemberEmail(member, parsed.data.subject || "Message from RCCG Worship Tabernacle", parsed.data.body)
+        : await sendCustomMemberSms(member, parsed.data.body);
+  } catch (sendError) {
+    const detail = sendError instanceof Error ? sendError.message : String(sendError);
+    console.error("Member message failed", { memberId: member.id, channel: parsed.data.channel, error: detail });
+    return NextResponse.json({ message: `${channelLabel} failed: ${detail}` }, { status: 502 });
+  }
 
   if ("skipped" in result && result.skipped) {
     return NextResponse.json(
-      { message: `${parsed.data.channel === "email" ? "Email" : "SMS"} is not configured or enabled for this member.` },
+      { message: `${channelLabel} is not configured or enabled for this member.` },
       { status: 400 }
     );
   }
 
-  return NextResponse.json({ message: `${parsed.data.channel === "email" ? "Email" : "SMS"} sent.` });
+  return NextResponse.json({ message: `${channelLabel} sent.` });
 }
