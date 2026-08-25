@@ -78,6 +78,7 @@ export function AdminDashboard({ initialMembers, view }: AdminDashboardProps) {
   const [selectedId, setSelectedId] = useState("");
   const [editing, setEditing] = useState<Member | null>(null);
   const [messageAction, setMessageAction] = useState<MessageAction>(null);
+  const [messageError, setMessageError] = useState("");
   const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -333,6 +334,7 @@ export function AdminDashboard({ initialMembers, view }: AdminDashboardProps) {
   async function sendMemberMessage(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!messageAction) return;
+    setMessageError("");
 
     setSending(true);
     setNotice("");
@@ -347,8 +349,7 @@ export function AdminDashboard({ initialMembers, view }: AdminDashboardProps) {
     if (messageAction.channel === "email") {
       if (messageAction.members.length > 100) {
         setSending(false);
-        setMessageAction(null);
-        setNotice("A single email batch supports up to 100 members. Narrow the member list and try again.");
+        setMessageError("A single email batch supports up to 100 members. Narrow the member list and try again.");
         return;
       }
 
@@ -367,7 +368,7 @@ export function AdminDashboard({ initialMembers, view }: AdminDashboardProps) {
       setSending(false);
 
       if (!response.ok) {
-        setNotice(result.message ?? "Could not send email batch.");
+        setMessageError(result.message ?? "Could not send email batch.");
         return;
       }
 
@@ -395,7 +396,9 @@ export function AdminDashboard({ initialMembers, view }: AdminDashboardProps) {
 
     const failed = results.filter((result) => !result.ok);
     if (failed.length) {
-      setNotice(failed[0]?.result.message ?? "Could not send message.");
+      setMessageError(
+        `${failed.length} of ${results.length} failed. ${failed[0]?.result.message ?? "Could not send message."}`
+      );
       return;
     }
 
@@ -805,7 +808,15 @@ export function AdminDashboard({ initialMembers, view }: AdminDashboardProps) {
                 <p>{messageAction.channel === "email" ? "Send email" : "Send SMS"}</p>
                 <h2>{messageAction.title}</h2>
               </div>
-              <button type="button" className="icon-button" onClick={() => setMessageAction(null)} aria-label="Close">
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => {
+                  setMessageAction(null);
+                  setMessageError("");
+                }}
+                aria-label="Close"
+              >
                 <X size={18} />
               </button>
             </div>
@@ -839,8 +850,21 @@ export function AdminDashboard({ initialMembers, view }: AdminDashboardProps) {
               />
             </label>
 
+            {messageError ? (
+              <p className="form-message error" role="alert">{messageError}</p>
+            ) : null}
+
             <div className="modal-actions">
-              <button type="button" className="ghost-button" onClick={() => setMessageAction(null)}>Cancel</button>
+              <button
+                type="button"
+                className="ghost-button"
+                onClick={() => {
+                  setMessageAction(null);
+                  setMessageError("");
+                }}
+              >
+                Cancel
+              </button>
               <button className="submit-button" disabled={sending}>
                 {sending ? <Loader2 className="spin" size={17} /> : <Send size={17} />}
                 {sending ? "Sending..." : `Send ${messageAction.channel === "email" ? "email" : "SMS"}`}
